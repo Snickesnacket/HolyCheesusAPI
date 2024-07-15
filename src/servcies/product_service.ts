@@ -33,7 +33,6 @@ export async function getProduct( id: number ) {
 
 
 export async function createProduct(data: PostProduct) {
-
 	try {
 		const result = await conn.query(`INSERT INTO Product SET ?`, {
 			Name: data.Name,
@@ -44,6 +43,30 @@ export async function createProduct(data: PostProduct) {
 
 		return result;
 
+	} catch (err) {
+		console.error(err)
+	}
+}
+
+export async function updateProduct( id: number, data: PostProduct ) {
+	try{
+		const [result] = await conn.query(`UPDATE Product SET ? WHERE ID = ?`, [data, id]);
+			if(!result) {
+				throw new Error()
+			}
+			return result
+	} catch (err) {
+		console.error(err)
+	}
+}
+
+export async function deleteProduct( id: number ) {
+	try{
+		const [result] = await conn.query(`DELETE FROM Product  WHERE Id = ?`, [id]);
+		if(!result) {
+			throw new Error()
+		}
+		return result
 	} catch (err) {
 		console.error(err)
 	}

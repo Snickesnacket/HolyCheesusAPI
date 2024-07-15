@@ -1,5 +1,5 @@
 import {Request, Response} from "express";
-import {createProduct, getProduct, getProducts} from "../servcies/product_service";
+import {createProduct, deleteProduct, getProduct, getProducts, updateProduct} from "../servcies/product_service";
 
  export interface  PostProduct {
 	 Name: string,
@@ -44,6 +44,41 @@ export const store = async (req: Request, res: Response )=> {
 	const newProduct = req.body
 	try{
 		const product =  await createProduct(newProduct)
+
+		res.send({
+			status: "success",
+			data: product,
+		})
+
+	} catch (err) {
+
+		res.status(500).send({ status: "error", message: "Something went wrong" })
+	}
+}
+
+export const update = async (req: Request, res: Response ) => {
+	const productId = Number(req.params.productId)
+	const newProduct = req.body
+
+	try{
+		const product =  await updateProduct(productId, newProduct)
+
+		res.send({
+			status: "success",
+			data: product,
+		})
+
+	} catch (err) {
+
+		res.status(500).send({ status: "error", message: "Something went wrong" })
+	}
+}
+
+export const destroy = async (req: Request, res: Response ) => {
+	const productId = Number(req.params.productId)
+
+	try{
+		const product =  await deleteProduct(productId )
 
 		res.send({
 			status: "success",

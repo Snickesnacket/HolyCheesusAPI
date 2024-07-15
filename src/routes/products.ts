@@ -1,6 +1,5 @@
 import express from 'express'
-import { index, store, show} from '../controllers/productController'
-import {destroy, update} from "../controllers/controller";
+import {destroy, index,update, store, show} from '../controllers/productController'
 
 const router = express.Router()
 
