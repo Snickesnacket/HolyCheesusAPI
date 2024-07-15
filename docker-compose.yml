@@ -1,0 +1,33 @@
+#services:
+#  adminer:
+#    image: adminer
+#    ports:
+#      - 8080:8080
+#
+#  mysql:
+#    image: mysql
+#    environment:
+#      - MYSQL_ROOT_PASSWORD=test1234
+#
+
+version: '3'
+
+services:
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+
+  mysql:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=test1234
+      - MYSQL_DATABASE=mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data.csv:/docker-entrypoint-initdb.d/data.csv
+      - ./import_script.sql:/docker-entrypoint-initdb.d/import_script.sql
+
+volumes:
+  mysql_data:
