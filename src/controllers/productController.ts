@@ -2,10 +2,10 @@ import {Request, Response} from "express";
 import {createProduct, deleteProduct, getProduct, getProducts, updateProduct} from "../servcies/product_service";
 
  export interface  PostProduct {
-	 Name: string,
-	 Description: string,
-	 Image: string,
-	 Price: number,
+	 name: string,
+	 description: string,
+	 image: string,
+	 price: number,
 }
 
 export const index = async (req: Request, res: Response) => {
@@ -42,6 +42,7 @@ export const show = async (req: Request, res: Response )=> {
 
 export const store = async (req: Request, res: Response )=> {
 	const newProduct = req.body
+	console.log(newProduct)
 	try{
 		const product =  await createProduct(newProduct)
 
@@ -51,7 +52,6 @@ export const store = async (req: Request, res: Response )=> {
 		})
 
 	} catch (err) {
-
 		res.status(500).send({ status: "error", message: "Something went wrong" })
 	}
 }

@@ -1,10 +1,10 @@
 import {conn} from "../db";
 
 export interface  PostProduct {
-	Name: string,
-	Description: string,
-	Image: string,
-	Price: string,
+	name: string,
+	description: string,
+	image: string,
+	price: number,
 }
 
 
@@ -22,7 +22,6 @@ export async function getProducts() {
 export async function getProduct( id: number ) {
 	try {
 		const [result] = await conn.query("SELECT * FROM Product WHERE Id = ?", [id]);
-		console.log(result, 'hello')
 		return result;
 
 	} catch (err) {
@@ -35,10 +34,10 @@ export async function getProduct( id: number ) {
 export async function createProduct(data: PostProduct) {
 	try {
 		const [result] = await conn.query(`INSERT INTO Product SET ?`, {
-			Name: data.Name,
-			Description: data.Description,
-			Image: data.Image,
-			price: Number(data.Price)
+			Name: data.name,
+			Description: data.description,
+			Image: data.image,
+			price: data.price
 		});
 
 		return result;
