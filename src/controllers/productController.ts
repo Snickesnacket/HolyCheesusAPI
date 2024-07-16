@@ -23,7 +23,7 @@ export const index = async (req: Request, res: Response) => {
 }
 
 export const show = async (req: Request, res: Response )=> {
-	const productId = Number(req.params.productId)
+	const productId = Number(req.params.id)
 
 	try{
 		const product =  await getProduct(productId)
@@ -57,7 +57,7 @@ export const store = async (req: Request, res: Response )=> {
 }
 
 export const update = async (req: Request, res: Response ) => {
-	const productId = Number(req.params.productId)
+	const productId = Number(req.params.id)
 	const newProduct = req.body
 
 	try{
@@ -75,7 +75,7 @@ export const update = async (req: Request, res: Response ) => {
 }
 
 export const destroy = async (req: Request, res: Response ) => {
-	const productId = Number(req.params.productId)
+	const productId = Number(req.params.id)
 
 	try{
 		const product =  await deleteProduct(productId )

@@ -1,18 +1,18 @@
 import express from 'express'
 import {destroy, index,update, store, show} from '../controllers/productController'
 import validate from '../middleware/json-validator';
-import {productSchema} from "../json-schemas/productValidation.schema";
+import {getProductSchema, postProductSchema} from "../json-schemas/productValidation.schema";
 
 const router = express.Router()
 
 router.get('/', index)
 
-router.get( '/:productId', show )
+router.get( '/:id', validate(getProductSchema), show )
 
-router.post('/', validate(productSchema), store)
+router.post('/', validate(postProductSchema), store)
 
-router.patch('/:productId', update)
+router.patch('/:id', update)
 
-router.delete('/:productId', destroy)
+router.delete('/:id', destroy)
 
 export default router

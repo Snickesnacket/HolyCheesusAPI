@@ -1,6 +1,6 @@
 import { List, ValidateFunction } from 'express-json-validator-middleware';
 
-export const productSchema: List<ValidateFunction>  = {
+export const postProductSchema: List<ValidateFunction>  = {
 	body: {
 		type:"object",
 		required: ['name', 'description', 'image', 'price'],
@@ -32,3 +32,16 @@ export const productSchema: List<ValidateFunction>  = {
 	}
 };
 
+export const getProductSchema: List<ValidateFunction> = {
+	params: {
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: {
+				type: 'string',
+				minLength: 1,
+				maxLength: 100,
+			},
+		},
+	},
+};
