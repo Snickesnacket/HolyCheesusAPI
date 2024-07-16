@@ -1,16 +1,17 @@
 import express from 'express'
 import {destroy, index,update, store, show} from '../controllers/productController'
-import validate from '../middleware/json-validator';
+import {addProductValidator} from "../Validations/productValidator";
+
+
 const router = express.Router()
 
-router.get('/',  validate(), index)
+router.get('/', index)
 
-router.get( '/:productId', validate(), show )
+router.get( '/:productId', show )
+router.post('/', addProductValidator, store)
 
-router.post('/',  validate(), store)
+router.patch('/:productId', update)
 
-router.patch('/:productId',  validate(), update)
-
-router.delete('/:productId',  validate(), destroy)
+router.delete('/:productId', destroy)
 
 export default router
