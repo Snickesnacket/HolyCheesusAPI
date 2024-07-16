@@ -1,16 +1,16 @@
 import express from 'express'
 import {destroy, index,update, store, show} from '../controllers/productController'
-
+import validate from '../middleware/json-validator';
 const router = express.Router()
 
-router.get('/', index)
+router.get('/',  validate(), index)
 
-router.get( '/:productId', show )
+router.get( '/:productId', validate(), show )
 
-router.post('/', store)
+router.post('/',  validate(), store)
 
-router.patch('/:productId', update)
+router.patch('/:productId',  validate(), update)
 
-router.delete('/:productId', destroy)
+router.delete('/:productId',  validate(), destroy)
 
 export default router

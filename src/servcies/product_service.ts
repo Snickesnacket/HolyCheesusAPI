@@ -34,7 +34,7 @@ export async function getProduct( id: number ) {
 
 export async function createProduct(data: PostProduct) {
 	try {
-		const result = await conn.query(`INSERT INTO Product SET ?`, {
+		const [result] = await conn.query(`INSERT INTO Product SET ?`, {
 			Name: data.Name,
 			Description: data.Description,
 			Image: data.Image,
