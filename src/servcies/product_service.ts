@@ -11,7 +11,6 @@ export interface  PostProduct {
 const currentTimestamp: Date = new Date();
 
 export async function getProducts() {
-
 	try {
 		 const [rows]  = await conn.execute<RowDataPacket[]>(`SELECT * FROM Product WHERE deletedAt IS NULL`);
 

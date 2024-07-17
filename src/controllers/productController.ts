@@ -1,6 +1,5 @@
 import {Request, Response} from "express";
 import {createProduct, deleteProduct, getProduct, getProducts, updateProduct} from "../servcies/product_service";
-import {isError} from "node:util";
 import {instanceOfNodeError} from "../errorTypeguard";
 
  export interface  PostProduct {
@@ -143,12 +142,11 @@ export const destroy = async (req: Request, res: Response ) => {
 		const product =  await deleteProduct(productId )
 
 		if(!product.affectedRows) {
-			return res.status(404).json({ status: "error", message: "Product not found" });
+			throw new Error(`Product dosen't exist`)
 		}
 
 		res.send({
 			status: "success",
-			message: "Product successfully deleted",
 			data: product,
 		})
 
