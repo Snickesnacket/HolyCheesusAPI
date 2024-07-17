@@ -1,5 +1,5 @@
 import {conn} from "../db";
-import mysql from "mysql2/promise";
+import mysql, {ResultSetHeader, RowDataPacket} from "mysql2/promise";
 
 export interface  PostProduct {
 	name?: string,
@@ -8,26 +8,33 @@ export interface  PostProduct {
 	price?: number,
 	deletedAt?: null | Date 
 }
-
+const currentTimestamp: Date = new Date();
 
 export async function getProducts() {
 
 	try {
-		 const [result] = await conn.query(`SELECT * FROM Product`);
-		 return result;
+		 const [rows]  = await conn.execute<RowDataPacket[]>(`SELECT * FROM Product WHERE deletedAt IS NULL`);
+
+		 return rows;
 
 	} catch (err) {
-		console.error(err)
+		console.error('Error in getProducts:', err);
+		throw err;
 	}
 }
 
-export async function getProduct( queryId: number ) {
+export async function getProduct(queryId: number): Promise<RowDataPacket | null> {
 	try {
-		const [insertResult] = await conn.query(`SELECT * FROM Product WHERE Id = ?`, [queryId]);
-		return insertResult;
+		const [rows] = await conn.execute<RowDataPacket[]>(
+			'SELECT * FROM Product WHERE Id = ? AND deletedAt IS NULL',
+			[queryId]
+		);
+
+		return rows.length > 0 ? rows[0] : null;
 
 	} catch (err) {
-		console.error(err)
+		console.error('Error in getProduct:', err);
+		throw err;
 	}
 }
 
@@ -35,46 +42,48 @@ export async function getProduct( queryId: number ) {
 
 export async function createProduct(queryData: PostProduct) {
 	try {
-		const [insertResult] = await conn.query(`INSERT INTO Product SET ?`, {
+		const [rows] = await conn.query<ResultSetHeader>(`INSERT INTO Product SET ?`, {
 			Name: queryData.name,
 			Description: queryData.description,
 			Image: queryData.image,
 			price: queryData.price
 		});
 
-		return insertResult as mysql.ResultSetHeader
+		return rows
 
-	} catch (err) {
-		console.error(err)
+	} catch (error) {
+		console.error('Error in createProduct:', error);
+		throw error;
 	}
 }
 
 export async function updateProduct( queryId: number, queryData: PostProduct ) {
 	try{
-		 console.log('hej!', queryData)
-		if (queryData.deletedAt === null) {
-		
-			const [recreateResult] = await conn.execute(
-				'UPDATE Product SET deletedAt = NULL, updatedAt = CURRENT_TIMESTAMP WHERE Id = ? AND deletedAt IS NOT NULL',
-				[queryId]
-			);
 
-			if (!Array.isArray(recreateResult) && recreateResult.affectedRows === 0) {
-				  console.log(recreateResult)
+		// återskapa en raderad produkt
+		if (queryData.deletedAt === null) {
+			const [reCreateResult] = await conn.execute(
+				'UPDATE Product SET deletedAt = NULL, updatedAt = ? WHERE Id = ? AND deletedAt IS NOT NULL',
+				[currentTimestamp, queryId]
+			);
+			// om produkten redan finns eller annat gick fel
+			if (!Array.isArray(reCreateResult) && reCreateResult.affectedRows === 0) {
 				throw new Error('Product not found or already active');
 			}
-
-			if(!Array.isArray(recreateResult) && recreateResult.affectedRows !=0) {
-				return getProduct(recreateResult.insertId )
+			// produkten lades till och hämtar den återskapade produkten
+			if(!Array.isArray(reCreateResult) && reCreateResult.affectedRows !=0 ) {
+				return await getProduct(queryId)
 			}
 
 		} else {
-			const [insertResult] = await conn.query(`UPDATE Product SET ?, updatedAt = CURRENT_TIMESTAMP WHERE Id = ? AND deletedAt IS NULL`, [queryData, queryId]);
-
-			if (!Array.isArray(insertResult) && insertResult.affectedRows === 0) {
+			// Ändra i en existerande produkt
+			const [updatedProduct] = await conn.query(`UPDATE Product SET ?, updatedAt = ? WHERE Id = ? AND deletedAt IS NULL`, [queryData, currentTimestamp, queryId]);
+			// om den inte kunde ändra
+			if (!Array.isArray(updatedProduct) && updatedProduct.affectedRows === 0) {
 				throw new Error('Product not found or already active');
 			}
-			return insertResult
+			// Om den uppdaterades korrekt
+			return updatedProduct
 		}
 
 	} catch (err) {
@@ -85,11 +94,10 @@ export async function updateProduct( queryId: number, queryData: PostProduct ) {
 }
 
 export async function deleteProduct( queryId: number ) {
-
-		const [insertResult] = await  conn.execute(
-			'UPDATE Product SET deletedAt = CURRENT_TIMESTAMP WHERE Id = ? AND deletedAt IS NULL',
-			[queryId]
+		const [result] = await  conn.execute<ResultSetHeader>(
+			'UPDATE Product SET deletedAt = ? WHERE Id = ? AND deletedAt IS NULL',
+			[currentTimestamp, queryId]
 		);
-		return insertResult as mysql.ResultSetHeader
+		return result
 }
 
