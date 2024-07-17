@@ -26,7 +26,7 @@ export const postProductSchema: List<ValidateFunction>  = {
 			price: {
 				type: 'number',
 				minimum: 1,
-				maximum: 10,
+				maximum: 1000,
 			}
 		},
 	}
@@ -40,8 +40,52 @@ export const getProductSchema: List<ValidateFunction> = {
 			id: {
 				type: 'string',
 				minLength: 1,
-				maxLength: 100,
+				maxLength: 10,
 			},
+		},
+	},
+};
+
+export const patchProductSchema: List<ValidateFunction> = {
+	params: {
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: {
+				type: 'string',
+				minLength: 1,
+				maxLength: 10,
+			},
+		},
+	},
+	body: {
+		type: 'object',
+		minProperties: 1,
+		maxProperties: 5,
+		properties: {
+			name: {
+				type: 'string',
+				minLength: 2,
+				maxLength: 20,
+			},
+			description: {
+				type: 'string',
+				minLength: 4,
+				maxLength: 255,
+			},
+			image: {
+				type: 'string',
+				minLength: 10,
+				maxLength: 255,
+			},
+			price: {
+				type: 'number',
+				minimum: 1,
+				maximum: 1000,
+			},
+			deletedAt: {
+				type: ["string", "null"]
+			}
 		},
 	},
 };
