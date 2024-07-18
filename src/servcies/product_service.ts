@@ -2,11 +2,18 @@ import {conn} from "../db";
 import mysql, {ResultSetHeader, RowDataPacket} from "mysql2/promise";
 
 export interface  PostProduct {
-	name?: string,
-	description?: string,
-	image?: string,
-	price?: number,
-	deletedAt?: null | Date 
+	name: string,
+	description: string,
+	image: string,
+	price: number,
+	deletedAt?: null | Date
+	//propertyValues: number[]
+	properties: [
+		{
+			propertyId: number
+			propertyValueId: number
+		}
+	]
 }
 const currentTimestamp: Date = new Date();
 
@@ -48,13 +55,29 @@ export async function createProduct(queryData: PostProduct) {
 			price: queryData.price
 		});
 
+
+		if(!rows.insertId && typeof 'number') {
+			throw new Error
+		}
+		const pId = rows.insertId
+
+		const values = queryData.properties.flatMap(item => [pId, item.propertyId, item.propertyValueId]);
+		const placeholders = queryData.properties.map(() => '(?, ?, ?)').join(', ');
+		const sql = `INSERT INTO Product_Property_Value (ProductId, PropertyId, ProductValueId) VALUES ${placeholders}`;
+		const [jointableRows] = await conn.execute(sql, values);
+
+		console.log('Inserted rows:', jointableRows);
+
 		return rows
 
 	} catch (error) {
+
 		console.error('Error in createProduct:', error);
 		throw error;
 	}
 }
+
+//hård, frankrike, krämig
 
 export async function updateProduct( queryId: number, queryData: PostProduct ) {
 	try{
@@ -93,10 +116,14 @@ export async function updateProduct( queryId: number, queryData: PostProduct ) {
 }
 
 export async function deleteProduct( queryId: number ) {
-		const [result] = await  conn.execute<ResultSetHeader>(
+		/*const [result] = await  conn.execute<ResultSetHeader>(
 			'UPDATE Product SET deletedAt = ? WHERE Id = ? AND deletedAt IS NULL',
 			[currentTimestamp, queryId]
-		);
+		);*/
+	const [result] = await  conn.execute<ResultSetHeader>(
+		'DELETE Product WHERE Id = ?',
+		[ queryId] );
+
 		return result
 }
 

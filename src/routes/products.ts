@@ -9,7 +9,7 @@ router.get('/', index)
 
 router.get( '/:id', validate(getProductSchema), show )
 
-router.post('/', validate(postProductSchema), store)
+router.post('/', store)
 
 router.patch('/:id', validate(patchProductSchema), update)
 

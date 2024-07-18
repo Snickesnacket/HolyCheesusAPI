@@ -7,6 +7,14 @@ import {instanceOfNodeError} from "../errorTypeguard";
 	 description: string,
 	 image: string,
 	 price: number,
+	 deletedAt?: null | Date
+	//propertyValues: number[]
+	 properties: [
+		 {
+			 propertyId: number
+			 propertyValueId: number
+		 }
+	 ]
 }
 
 export const index = async (req: Request, res: Response) => {
@@ -55,9 +63,12 @@ export const show = async (req: Request, res: Response) => {
 };
 
 
+
 export const store = async (req: Request, res: Response) => {
 	try {
+
 		const newProduct = await createProduct(req.body);
+		console.log(newProduct, 'ny product')
 
 		if (!newProduct) {
 			return res.status(404).send({ status: "error", message: "Product already exists" });
@@ -72,7 +83,6 @@ export const store = async (req: Request, res: Response) => {
 
 	} catch (err) {
 		console.error('Error creating product:', err);
-
 		if (err instanceof Error) {
 			return res.status(409).json({
 				status: "error",
@@ -82,6 +92,7 @@ export const store = async (req: Request, res: Response) => {
 		}
 	}
 };
+
 
 
 export const update = async (req: Request, res: Response ) => {
@@ -151,6 +162,10 @@ export const destroy = async (req: Request, res: Response ) => {
 		})
 
 	} catch (err: any) {
+		console.log(err)
+		if(err.code === 1216) {
+			return res.status(400).send({ status: "error", message: "This property dose not exist" });
+		}
 		if (instanceOfNodeError(err, Error)) {
 		switch (err.code) {
 			case 'ER_ROW_IS_REFERENCED_2':

@@ -3,7 +3,7 @@ import { List, ValidateFunction } from 'express-json-validator-middleware';
 export const postProductSchema: List<ValidateFunction>  = {
 	body: {
 		type:"object",
-		required: ['name', 'description', 'image', 'price'],
+		required: ['name', 'description', 'image', 'price', 'properties'],
 		properties: {
 			name: {
 				type: 'string',
@@ -27,7 +27,11 @@ export const postProductSchema: List<ValidateFunction>  = {
 				type: 'number',
 				minimum: 1,
 				maximum: 1000,
-			}
+			},
+			properties: {
+				type: "array", items: {type: "object"},
+			},
+
 		},
 	}
 };
@@ -82,6 +86,37 @@ export const patchProductSchema: List<ValidateFunction> = {
 				type: 'number',
 				minimum: 1,
 				maximum: 1000,
+			},
+			consistency: {
+				type: 'string',
+				enum: ['hård', 'mjuk']
+			},
+			country: {
+				type: "string",
+				enum: [
+					"Italien",
+					"Frankrike",
+					"USA",
+					"Nederländerna",
+					"Schweiz",
+					"England",
+					"Spanien",
+					"Grekland",
+					"Cypern",
+					"Mexico"
+				]
+			},
+
+			flavor: {
+				type: 'string',
+				enum: [ "Skarp",
+					"Krämig",
+					"Nötig",
+					"Syrlig",
+					"Salt",
+					"Söt",
+					"Mild",
+					"Fruktig" ]
 			},
 			deletedAt: {
 				type: ["string", "null"]

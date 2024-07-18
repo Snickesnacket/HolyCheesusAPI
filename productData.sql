@@ -1,6 +1,4 @@
 
-CREATE DATABASE holyProducts;
-SHOW DATABASES;
 
 USE holyProducts;
 
@@ -61,12 +59,12 @@ VALUES
 
 
 
-INSERT INTO Property (Name) VALUES ("Konsistens");
+INSERT INTO Property (Name) VALUES ("Consistency");
 INSERT INTO Property_Value (PropertyId, Name) VALUES (1, "Hård");
 INSERT INTO Property_Value (PropertyId, Name) VALUES (1, "Mjuk");
 INSERT INTO Product_Property_Value (ProductId, PropertyId, ProductValueId) VALUES (1, 1, 1);
 
-INSERT INTO Property (Name) VALUES ("Land");
+INSERT INTO Property (Name) VALUES ("Country");
 INSERT INTO Property_Value (PropertyId, Name) VALUES (2, "Italien");
 INSERT INTO Property_Value (PropertyId, Name) VALUES (2, "Frankrike");
 INSERT INTO Property_Value (PropertyId, Name) VALUES (2, "USA");
@@ -78,7 +76,7 @@ INSERT INTO Property_Value (PropertyId, Name) VALUES (2, "Grekland");
 INSERT INTO Property_Value (PropertyId, Name) VALUES (2, "Cypern");
 INSERT INTO Property_Value (PropertyId, Name) VALUES (2, "Mexico");
 
-INSERT INTO Property (Name) VALUES ("Smak");
+INSERT INTO Property (Name) VALUES ("Flavor");
 INSERT INTO Property_Value  (PropertyId, Name) VALUES (3, 'Skarp');
 INSERT INTO Property_Value  (PropertyId, Name) VALUES (3, 'Krämig');
 INSERT INTO Property_Value  (PropertyId, Name) VALUES (3, 'Nötig');
@@ -189,7 +187,8 @@ INSERT INTO Product_Property_Value (ProductId, PropertyId, ProductValueId) VALUE
 INSERT INTO Product_Property_Value (ProductId, PropertyId, ProductValueId) VALUES (20, 3, 2); -- Creamy
 
 
-
+ALTER TABLE Product
+    ADD COLUMN deletedAt TIMESTAMP NULL DEFAULT NULL;
 
 
 
