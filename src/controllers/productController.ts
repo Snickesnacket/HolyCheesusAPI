@@ -8,7 +8,6 @@ import {instanceOfNodeError} from "../errorTypeguard";
 	 image: string,
 	 price: number,
 	 deletedAt?: null | Date
-	//propertyValues: number[]
 	 properties: [
 		 {
 			 propertyId: number
