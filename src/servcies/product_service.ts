@@ -52,7 +52,6 @@ export async function getProducts() {
 		const [propertyRows] = await conn.execute<RowDataPacket[]>(
 			`SELECT
                  Property.Id AS propertyId,
-                 Property.Name AS propertyName,
                  Property_Value.Id AS propertyValueId,
                  Property_Value.Name AS propertyValueName
              FROM Product
