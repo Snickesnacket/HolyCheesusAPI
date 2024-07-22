@@ -64,8 +64,6 @@ export const patchProductSchema: List<ValidateFunction> = {
 	},
 	body: {
 		type: 'object',
-		minProperties: 1,
-		maxProperties: 5,
 		properties: {
 			name: {
 				type: 'string',
@@ -87,36 +85,8 @@ export const patchProductSchema: List<ValidateFunction> = {
 				minimum: 1,
 				maximum: 1000,
 			},
-			consistency: {
-				type: 'string',
-				enum: ['hård', 'mjuk']
-			},
-			country: {
-				type: "string",
-				enum: [
-					"Italien",
-					"Frankrike",
-					"USA",
-					"Nederländerna",
-					"Schweiz",
-					"England",
-					"Spanien",
-					"Grekland",
-					"Cypern",
-					"Mexico"
-				]
-			},
-
-			flavor: {
-				type: 'string',
-				enum: [ "Skarp",
-					"Krämig",
-					"Nötig",
-					"Syrlig",
-					"Salt",
-					"Söt",
-					"Mild",
-					"Fruktig" ]
+			properties: {
+				type: "array", items: {type: "object"},
 			},
 			deletedAt: {
 				type: ["string", "null"]

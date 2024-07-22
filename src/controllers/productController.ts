@@ -1,6 +1,13 @@
 import {Request, Response} from "express";
-import {createProduct, deleteProduct, getProduct, getProducts, updateProduct} from "../servcies/product_service";
+import {
+	createProduct,
+	deleteProduct,
+	getProduct,
+	getProducts,
+	insertProductProperties, recreateProduct, updateExistingProduct,
+} from "../servcies/product_service";
 import {instanceOfNodeError} from "../errorTypeguard";
+import {conn} from "../db";
 
  export interface  PostProduct {
 	 name: string,
@@ -18,11 +25,27 @@ import {instanceOfNodeError} from "../errorTypeguard";
 
 export const index = async (req: Request, res: Response) => {
 	try{
-		const products =  await getProducts()
+		const reponse =  await getProducts()
 
-		if (!products) {
+		if (!reponse) {
 			return res.status(404).send({ status: "error", message: "Products not found" });
 		}
+
+		const products = reponse.map(item => {
+			let properties = item.Properties_Values.split(',');
+
+			properties = properties.map((property: any) => {
+				const [propertyId, propertyName, propertyValueId, propertyValueName] = property.split(':');
+
+				return {
+					propertyId, propertyName, propertyValueId, propertyValueName
+				}
+			})
+
+			item.properties = properties;
+
+			return item;
+		})
 
 		res.send({
 			status: "success",
@@ -44,11 +67,31 @@ export const show = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const product = await getProduct(productId);
+		const response = await getProduct(productId);
 
-		if (!product) {
+		if (!response) {
 			return res.status(404).send({ status: "error", message: "Product not found" });
 		}
+
+		if (response.length === 0) {
+			return null;
+		}
+
+		const product = response.map(item => {
+			let properties = item.Properties_Values.split(',')
+
+			properties = properties.map((property: any) => {
+				const [propertyId, propertyName, propertyValueId, propertyValueName] = property.split(':');
+
+				return {
+					propertyId, propertyName, propertyValueId, propertyValueName
+				}
+			})
+
+			item.properties = properties;
+
+			return item;
+		})
 
 		res.send({
 			status: "success",
@@ -65,19 +108,26 @@ export const show = async (req: Request, res: Response) => {
 
 export const store = async (req: Request, res: Response) => {
 	try {
+		console.log(req.body)
+		const response = await createProduct(req.body);
+		console.log(response, 'ny product')
 
-		const newProduct = await createProduct(req.body);
-		console.log(newProduct, 'ny product')
-
-		if (!newProduct) {
+		if (!response) {
 			return res.status(404).send({ status: "error", message: "Product already exists" });
 		}
 
-		// Fetch the newly created product
-		const result = await getProduct(newProduct.insertId);
+		if (!response.insertId && typeof 'number') {
+			throw new Error('Failed to create product');
+		}
+		const productId = response.insertId;
+
+		await insertProductProperties(productId, req.body.properties);
+
+		const product = await getProduct(response.insertId);
+
 		res.status(201).send({
 			status: "success",
-			data: result,
+			data: product,
 		});
 
 	} catch (err) {
@@ -102,16 +152,43 @@ export const update = async (req: Request, res: Response ) => {
 	}
 
 	try{
-		const queryResult =  await updateProduct(productId, req.body)
+		if (req.body.deletedAt === null) {
+			const updatedProduct = await updateExistingProduct(req.body, productId)
+				if(!updatedProduct) {
+					return res.status(404).send({ status: "error", message: "Product not found" });
+				}
+				// om produkten redan finns eller annat gick fel
+				if (!Array.isArray(updatedProduct) && updatedProduct.affectedRows === 0) {
+					throw new Error('Product not found or already active');
+				}
+				// produkten lades till och hämtar den återskapade produkten
+				if(!Array.isArray(updatedProduct) && updatedProduct.affectedRows !=0 ) {
+					const p =  await getProduct(updatedProduct.insertId)
+					res.send({
+						status: "success",
+						data: p,
+					})
+				}
 
-		if(!queryResult) {
-			return res.status(404).send({ status: "error", message: "Product not found" });
+		}
+		if (req.body.deletedAt != null) {
+			console.log('hej')
+			const product  = await recreateProduct(productId)
+
+			if (!Array.isArray(product) && product.affectedRows === 0) {
+				throw new Error('Product not found or already active');
+			}
+			if(!product) {
+				return res.status(404).send({ status: "error", message: "Product not found" });
+			}
+				const p = await getProduct(productId)
+
+				res.send({
+					status: "success",
+					data: p,
+				})
 		}
 
-		res.send({
-			status: "success",
-			data: queryResult,
-		})
 
 	} catch (err: any) {
 		if (instanceOfNodeError(err, Error)) {
