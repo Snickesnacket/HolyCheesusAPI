@@ -37,9 +37,6 @@ export interface Product {
 const currentTimestamp: Date = new Date();
 export async function getProducts() {
 	try {
-		const [productRows] = await conn.execute<RowDataPacket[]>(
-			`SELECT * FROM Product WHERE deletedAt IS NULL`,
-		);
 
 		const [propertyRows] = await conn.execute<RowDataPacket[]>(
 			`SELECT
@@ -86,47 +83,50 @@ export async function getProducts() {
 		throw err;
 	}
 }
-		export async function getProduct(queryId: number): Promise<Product | null> {
+		export async function getProduct(queryId: number) {
 	try{
+
 		const [propertyRows] = await conn.execute<RowDataPacket[]>(
 			`SELECT
-                 Property.Id AS propertyId,
-                 Property_Value.Id AS propertyValueId,
-                 Property_Value.Name AS propertyValueName
-             FROM Product
-                      LEFT JOIN Product_Property_Value ON Product.Id = Product_Property_Value.ProductId
-                      LEFT JOIN Property ON Product_Property_Value.PropertyId = Property.Id
-                      LEFT JOIN Property_Value ON Product_Property_Value.ProductValueId = Property_Value.Id
-             WHERE Product.Id = ?`,
+                 p.Id,
+                 p.Name,
+                 p.Description,
+                 p.Image,
+                 p.Price,
+                 p.CreatedAt,
+                 p.UpdatedAt,
+                 p.DeletedAt,
+                 GROUP_CONCAT(CONCAT(pr.Id, ':', pr.Name, ':', pv.Id, ':', pv.Name) SEPARATOR ',') AS Properties_Values
+             FROM
+                 Product p
+                     JOIN Product_Property_Value ppv ON p.Id = ppv.ProductId
+                     JOIN Property pr ON ppv.PropertyId = pr.Id
+                     JOIN Property_Value pv ON ppv.ProductValueId = pv.Id
+             WHERE p.DeletedAt IS NULL AND p.Id = ?
+             GROUP BY p.Id, p.Name, p.Description, p.Image, p.Price, p.CreatedAt, p.UpdatedAt, p.DeletedAt;`,
 			[queryId]
 		);
-			const [productRows] = await conn.execute<RowDataPacket[]>(
-				`SELECT * FROM Product WHERE Id = ? AND deletedAt IS NULL`,
-				[queryId]
-			);
 
-			if (productRows.length === 0) {
+
+			if (propertyRows.length === 0) {
 				return null;
 			}
 
-			const product: Product = {
-				Id: productRows[0].Id,
-				Name: productRows[0].Name,
-				Description: productRows[0].Description,
-				Image: productRows[0].Image,
-				Price: productRows[0].Price,
-				CreatedAt: productRows[0].CreatedAt,
-				UpdatedAt: productRows[0].UpdatedAt,
-				DeletedAt: productRows[0].DeletedAt,
-				properties: (propertyRows as PropertyRow[]).map(item => ({
-					propertyId: item.propertyId,
-					propertyValueId: item.propertyValueId,
-					propertyValueName: item.propertyValueName
-				}))
-			};
+			return propertyRows.map(item => {
+				let properties = item.Properties_Values.split(',')
 
-			console.log(product);
-			return product;
+				properties = properties.map((property: any) => {
+					const [propertyId, propertyName, propertyValueId, propertyValueName] = property.split(':');
+
+					return {
+						propertyId, propertyName, propertyValueId, propertyValueName
+					}
+				})
+
+				item.properties = properties;
+
+				return item;
+			})
 
 	} catch (err) {
 		console.error('Error in getProduct:', err);
