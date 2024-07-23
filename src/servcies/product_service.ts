@@ -9,11 +9,13 @@ export interface  PostProduct {
 	createdAt: Date,
 	updatedAt: Date,
 	deletedAt?: null | Date
-	properties: Properties[]
+	properties?: Properties[]
 }
 export interface Properties {
-		propertyId: number
-		propertyValueId: number | string
+		propertyId: number,
+		propertyName: string,
+		propertyValueId: number | string,
+		propertyValueName: string
 }
 
 const currentTimestamp: Date = new Date();
@@ -82,19 +84,21 @@ export async function deleteProduct( queryId: number ) {
 export async function insertProductProperties(productId: number, properties: any[]) {
 	const values = properties.flatMap(item => [productId, item.propertyId, item.propertyValueId]);
 	const placeholders = properties.map(() => '(?, ?, ?)').join(', ');
-	const sql = `INSERT INTO Product_Property_Value (ProductId, PropertyId, ProductValueId) VALUES ${placeholders}`;
+	const sql = `UPDATE Product_Property_Value SET (ProductId, PropertyId, ProductValueId) WHERE ProductId = ? ${placeholders}, ,[PId]`;
 	return await conn.execute(sql, values);
 }
-
 export async function updateExistingProduct (queryData: PostProduct, id: number ) {
+	const { properties } = queryData
+	 delete queryData.properties;
+
 	const [updatedProduct] = await conn.query(`
-	UPDATE Product, Product_Property_Value, Property_Value 
+	UPDATE Product
 	   SET ?,
 		   updatedAt = ?
 	   WHERE Id = ?
 		 AND deletedAt IS NULL`, [queryData, currentTimestamp, id]);
-
-	return updatedProduct
+		console.log(updatedProduct, 'here')
+	return {updatedProduct, properties}
 }
 
 export async function recreateProduct (id: number) {
@@ -104,4 +108,18 @@ export async function recreateProduct (id: number) {
 		[currentTimestamp, id]
 	);
 	return recreation
+}
+
+export async function updateProductProperties (productId: number, properties: Properties[]) {
+	return properties.map(async item => {
+		const sql = `
+                UPDATE Product_Property_Value
+                SET ProductValueId = ?
+                WHERE ProductId = ?
+                  AND PropertyId = ?;
+			`;
+		const values = [item.propertyValueId, productId, item.propertyId]
+		console.log(sql, values, 'hereee')
+		await conn.execute(sql, values);
+	})
 }

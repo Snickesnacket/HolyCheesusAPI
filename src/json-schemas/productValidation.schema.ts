@@ -85,11 +85,11 @@ export const patchProductSchema: List<ValidateFunction> = {
 				minimum: 1,
 				maximum: 1000,
 			},
-			properties: {
-				type: "array", items: {type: "object"},
-			},
 			deletedAt: {
 				type: ["string", "null"]
+			},
+			properties: {
+				type: "array", items: {type: "object"},
 			}
 		},
 	},

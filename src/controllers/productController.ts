@@ -4,7 +4,7 @@ import {
 	deleteProduct,
 	getProduct,
 	getProducts,
-	insertProductProperties, recreateProduct, updateExistingProduct,
+	insertProductProperties, recreateProduct, updateExistingProduct, updateProductProperties,
 } from "../servcies/product_service";
 import {instanceOfNodeError} from "../errorTypeguard";
 import {conn} from "../db";
@@ -158,6 +158,7 @@ export const store = async (req: Request, res: Response) => {
 
 
 export const update = async (req: Request, res: Response ) => {
+	console.log('hej', req.body)
 	const productId = Number(req.params.id);
 	let transactionAcitve = false;
 
@@ -166,14 +167,20 @@ export const update = async (req: Request, res: Response ) => {
 			await startTransaction();
 			transactionAcitve = true;
 
-		const updatedProduct = await updateExistingProduct(req.body, productId)
+		const {updatedProduct, properties} = await updateExistingProduct(req.body, productId)
+			console.log(updatedProduct, 'updated`')
 			if(!updatedProduct || !Array.isArray(updatedProduct) && updatedProduct.affectedRows === 0) {
 				await rollbackTransaction();
 				transactionAcitve = false;
 				return res.status(404).send({ status: "error", message: "Product not found" });
 			}
+			if(!properties) {
+				throw new Error( 'properties error ')
+			}
 
-			if(!Array.isArray(updatedProduct) && updatedProduct.affectedRows !=0 ) {
+			const propertyResponse = await updateProductProperties(productId, properties)
+
+			if(!Array.isArray(updatedProduct) && updatedProduct.affectedRows !=0 && propertyResponse) {
 				const p =  await getProduct(updatedProduct.insertId)
 				if(p) {
 					await commitTransaction();
