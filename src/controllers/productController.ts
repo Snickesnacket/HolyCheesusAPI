@@ -8,6 +8,7 @@ import {
 } from "../servcies/product_service";
 import {instanceOfNodeError} from "../errorTypeguard";
 import {conn} from "../db";
+import {commitTransaction, rollbackTransaction, startTransaction} from "../servcies/helper_service";
 
  export interface  PostProduct {
 	 name: string,
@@ -62,19 +63,12 @@ export const index = async (req: Request, res: Response) => {
 export const show = async (req: Request, res: Response) => {
 	const productId = Number(req.params.id);
 
-	if (isNaN(productId) || productId <= 0) {
-		return res.status(400).send({ status: "error", message: "Invalid product ID" });
-	}
 
 	try {
 		const response = await getProduct(productId);
 
-		if (!response) {
-			return res.status(404).send({ status: "error", message: "Product not found" });
-		}
-
-		if (response.length === 0) {
-			return null;
+		if (!response || response.length === 0) {
+			throw new Error("Failed to find selected product")
 		}
 
 		const product = response.map(item => {
@@ -93,6 +87,10 @@ export const show = async (req: Request, res: Response) => {
 			return item;
 		})
 
+		if(!product){
+			throw new Error( "Failed to fetch product")
+		}
+
 		res.send({
 			status: "success",
 			data: product,
@@ -107,30 +105,45 @@ export const show = async (req: Request, res: Response) => {
 
 
 export const store = async (req: Request, res: Response) => {
+		let transactionAcitve = false;
 	try {
-		console.log(req.body)
-		const response = await createProduct(req.body);
-		console.log(response, 'ny product')
 
-		if (!response) {
+		console.log(req.body)
+		await startTransaction();
+		transactionAcitve = true;
+
+		const productResponse = await createProduct(req.body);
+		console.log(productResponse, 'ny product')
+
+		if (!productResponse) {
 			return res.status(404).send({ status: "error", message: "Product already exists" });
 		}
 
-		if (!response.insertId && typeof 'number') {
-			throw new Error('Failed to create product');
+		const propertyResponse = await insertProductProperties(productResponse.insertId, req.body.properties);
+
+		if(!propertyResponse) {
+			throw new Error('Failed to set properties of the product');
 		}
-		const productId = response.insertId;
 
-		await insertProductProperties(productId, req.body.properties);
+		const product = await getProduct(productResponse.insertId);
 
-		const product = await getProduct(response.insertId);
-
-		res.status(201).send({
-			status: "success",
-			data: product,
-		});
+		if (productResponse && propertyResponse && product ) {
+			await commitTransaction();
+			transactionAcitve = false;
+			res.status(201).send({
+				status: "success",
+				data: product,
+			});
+		} else {
+			await rollbackTransaction();
+			transactionAcitve = false;
+			return res.status(500).json({error: 'Failed to create product'})
+		}
 
 	} catch (err) {
+		if (transactionAcitve) {
+			await rollbackTransaction();
+		}
 		console.error('Error creating product:', err);
 		if (err instanceof Error) {
 			return res.status(409).json({
@@ -146,51 +159,66 @@ export const store = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response ) => {
 	const productId = Number(req.params.id);
-
-	if (isNaN(productId) || productId <= 0) {
-		return res.status(400).send({ status: "error", message: "Invalid product ID" });
-	}
+	let transactionAcitve = false;
 
 	try{
 		if (req.body.deletedAt === null) {
-			const updatedProduct = await updateExistingProduct(req.body, productId)
-				if(!updatedProduct) {
-					return res.status(404).send({ status: "error", message: "Product not found" });
-				}
-				// om produkten redan finns eller annat gick fel
-				if (!Array.isArray(updatedProduct) && updatedProduct.affectedRows === 0) {
-					throw new Error('Product not found or already active');
-				}
-				// produkten lades till och hämtar den återskapade produkten
-				if(!Array.isArray(updatedProduct) && updatedProduct.affectedRows !=0 ) {
-					const p =  await getProduct(updatedProduct.insertId)
+			await startTransaction();
+			transactionAcitve = true;
+
+		const updatedProduct = await updateExistingProduct(req.body, productId)
+			if(!updatedProduct || !Array.isArray(updatedProduct) && updatedProduct.affectedRows === 0) {
+				await rollbackTransaction();
+				transactionAcitve = false;
+				return res.status(404).send({ status: "error", message: "Product not found" });
+			}
+
+			if(!Array.isArray(updatedProduct) && updatedProduct.affectedRows !=0 ) {
+				const p =  await getProduct(updatedProduct.insertId)
+				if(p) {
+					await commitTransaction();
+					transactionAcitve = false;
 					res.send({
 						status: "success",
 						data: p,
 					})
 				}
 
+			} else {
+				await rollbackTransaction();
+				transactionAcitve = false;
+				return res.status(500).json({error: 'Failed to create product'})
+			}
+
 		}
 		if (req.body.deletedAt != null) {
-			console.log('hej')
+
 			const product  = await recreateProduct(productId)
 
-			if (!Array.isArray(product) && product.affectedRows === 0) {
+			if (!Array.isArray(product) && product.affectedRows === 0 || !product) {
 				throw new Error('Product not found or already active');
-			}
-			if(!product) {
-				return res.status(404).send({ status: "error", message: "Product not found" });
-			}
-				const p = await getProduct(productId)
 
+			}
+			const p = await getProduct(productId)
+			if(p){
+				await commitTransaction();
+				transactionAcitve = false;
 				res.send({
 					status: "success",
 					data: p,
 				})
+			}else {
+				await rollbackTransaction();
+				transactionAcitve = false;
+				return res.status(500).json({error: 'Failed to create product'})
+			}
 		}
 
-
 	} catch (err: any) {
+
+		if (transactionAcitve) {
+			await rollbackTransaction();
+		}
 		if (instanceOfNodeError(err, Error)) {
 			switch (err.code) {
 				case 'ER_DUP_ENTRY':
@@ -213,8 +241,6 @@ export const update = async (req: Request, res: Response ) => {
 					});
 			}
 		}
-
-		res.status(500).json({status: "error", message: "Something went wrong"});
 	}
 }
 
@@ -243,25 +269,20 @@ export const destroy = async (req: Request, res: Response ) => {
 			return res.status(400).send({ status: "error", message: "This property dose not exist" });
 		}
 		if (instanceOfNodeError(err, Error)) {
-		switch (err.code) {
-			case 'ER_ROW_IS_REFERENCED_2':
-				return res.status(409).json({
-					status: "error",
-					message: "Cannot delete product as it is referenced by other records",
-					sqlMessage: err.message
-				});
-			default:
-				return res.status(500).json({
-					status: "error",
-					message: "Database error occurred",
-					sqlMessage: err.message
-				});
+			switch (err.code) {
+				case 'ER_ROW_IS_REFERENCED_2':
+					return res.status(409).json({
+						status: "error",
+						message: "Cannot delete product as it is referenced by other records",
+						sqlMessage: err.message
+					});
+				default:
+					return res.status(500).json({
+						status: "error",
+						message: "Database error occurred",
+						sqlMessage: err.message
+					});
+			}
 		}
 	}
-
-	res.status(500).json({
-		status: "error",
-		message: "An unexpected error occurred while deleting the product"
-	});
-}
 };

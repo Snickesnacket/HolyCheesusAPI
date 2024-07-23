@@ -83,11 +83,12 @@ export async function insertProductProperties(productId: number, properties: any
 	const values = properties.flatMap(item => [productId, item.propertyId, item.propertyValueId]);
 	const placeholders = properties.map(() => '(?, ?, ?)').join(', ');
 	const sql = `INSERT INTO Product_Property_Value (ProductId, PropertyId, ProductValueId) VALUES ${placeholders}`;
-	await conn.execute(sql, values);
+	return await conn.execute(sql, values);
 }
 
 export async function updateExistingProduct (queryData: PostProduct, id: number ) {
-	const [updatedProduct] = await conn.query(`UPDATE Product
+	const [updatedProduct] = await conn.query(`
+	UPDATE Product, Product_Property_Value, Property_Value 
 	   SET ?,
 		   updatedAt = ?
 	   WHERE Id = ?
