@@ -63,6 +63,7 @@ export const patchProductSchema: List<ValidateFunction> = {
 		},
 	},
 	body: {
+		required: ['name', 'description', 'image','price', 'properties'],
 		type: 'object',
 		properties: {
 			name: {
@@ -85,12 +86,24 @@ export const patchProductSchema: List<ValidateFunction> = {
 				minimum: 1,
 				maximum: 1000,
 			},
-			deletedAt: {
-				type: ["string", "null"]
-			},
 			properties: {
 				type: "array", items: {type: "object"},
 			}
+		},
+	},
+};
+
+
+export const reCreateProductSchema: List<ValidateFunction> = {
+	params: {
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: {
+				type: 'string',
+				minLength: 1,
+				maxLength: 10,
+			},
 		},
 	},
 };

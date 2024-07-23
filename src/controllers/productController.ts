@@ -10,20 +10,6 @@ import {instanceOfNodeError} from "../errorTypeguard";
 import {conn} from "../db";
 import {commitTransaction, rollbackTransaction, startTransaction} from "../servcies/helper_service";
 
- export interface  PostProduct {
-	 name: string,
-	 description: string,
-	 image: string,
-	 price: number,
-	 deletedAt?: null | Date
-	 properties: [
-		 {
-			 propertyId: number
-			 propertyValueId: number
-		 }
-	 ]
-}
-
 export const index = async (req: Request, res: Response) => {
 	try{
 		const reponse =  await getProducts()
@@ -158,36 +144,44 @@ export const store = async (req: Request, res: Response) => {
 
 
 export const update = async (req: Request, res: Response ) => {
-	console.log('hej', req.body)
 	const productId = Number(req.params.id);
 	let transactionAcitve = false;
 
 	try{
-		if (req.body.deletedAt === null) {
-			await startTransaction();
-			transactionAcitve = true;
+		await startTransaction();
+		transactionAcitve = true;
+		const getProductResponse = await getProduct(productId)
 
-		const {updatedProduct, properties} = await updateExistingProduct(req.body, productId)
-			console.log(updatedProduct, 'updated`')
+		if(!getProductResponse) {
+			await rollbackTransaction();
+			transactionAcitve = false;
+			return res.status(404).send({ status: "error", message: "Product not found" });
+		}
+
+		if (getProductResponse.at(0)?.data.deletedAt === null) {
+
+			const { properties } = req.body
+			delete req.body.properties;
+
+			const updatedProduct = await updateExistingProduct(req.body, productId)
+
 			if(!updatedProduct || !Array.isArray(updatedProduct) && updatedProduct.affectedRows === 0) {
 				await rollbackTransaction();
 				transactionAcitve = false;
 				return res.status(404).send({ status: "error", message: "Product not found" });
 			}
-			if(!properties) {
-				throw new Error( 'properties error ')
-			}
 
 			const propertyResponse = await updateProductProperties(productId, properties)
+			const result = await Promise.all(propertyResponse);
 
 			if(!Array.isArray(updatedProduct) && updatedProduct.affectedRows !=0 && propertyResponse) {
-				const p =  await getProduct(updatedProduct.insertId)
-				if(p) {
+				const product =  await getProduct(updatedProduct.insertId)
+				if(product) {
 					await commitTransaction();
 					transactionAcitve = false;
 					res.send({
 						status: "success",
-						data: p,
+						data: product,
 					})
 				}
 
@@ -198,31 +192,8 @@ export const update = async (req: Request, res: Response ) => {
 			}
 
 		}
-		if (req.body.deletedAt != null) {
-
-			const product  = await recreateProduct(productId)
-
-			if (!Array.isArray(product) && product.affectedRows === 0 || !product) {
-				throw new Error('Product not found or already active');
-
-			}
-			const p = await getProduct(productId)
-			if(p){
-				await commitTransaction();
-				transactionAcitve = false;
-				res.send({
-					status: "success",
-					data: p,
-				})
-			}else {
-				await rollbackTransaction();
-				transactionAcitve = false;
-				return res.status(500).json({error: 'Failed to create product'})
-			}
-		}
 
 	} catch (err: any) {
-
 		if (transactionAcitve) {
 			await rollbackTransaction();
 		}
@@ -293,3 +264,61 @@ export const destroy = async (req: Request, res: Response ) => {
 		}
 	}
 };
+
+export const reCreate = async (req: Request, res: Response ) => {
+	const productId = Number(req.params.id);
+	let transactionAcitve = false;
+
+	try{
+		await startTransaction();
+		transactionAcitve = true;
+
+		const product  = await recreateProduct(productId)
+
+		if (!Array.isArray(product) && product.affectedRows === 0 || !product) {
+			throw new Error('Product not found or already active');
+
+		}
+		const p = await getProduct(productId)
+
+		if(p){
+			await commitTransaction();
+			transactionAcitve = false;
+			res.send({
+				status: "success",
+				data: p,
+			})
+		}else {
+			await rollbackTransaction();
+			transactionAcitve = false;
+			return res.status(500).json({error: 'Failed to create product'})
+		}
+
+	} catch (err: any) {
+		if (transactionAcitve) {
+			await rollbackTransaction();
+		}
+		if (instanceOfNodeError(err, Error)) {
+			switch (err.code) {
+				case 'ER_DUP_ENTRY':
+					return res.status(409).json({
+						status: "error",
+						message: "A product with this name already exists",
+						sqlMessage: err.message
+					});
+				case 'ER_NO_REFERENCED_ROW_2':
+					return res.status(400).json({
+						status: "error",
+						message: "Invalid reference in the product data",
+						sqlMessage: err.message
+					});
+				default:
+					return res.status(500).json({
+						status: "error",
+						message: "Database error occurred",
+						sqlMessage: err.message
+					});
+			}
+		}
+	}
+}

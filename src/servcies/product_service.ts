@@ -1,5 +1,6 @@
 import {conn} from "../db";
-import {ResultSetHeader, RowDataPacket} from "mysql2/promise";
+import {QueryResult, ResultSetHeader, RowDataPacket} from "mysql2/promise";
+import {commitTransaction, rollbackTransaction, startTransaction} from "./helper_service";
 export interface  PostProduct {
 	Id: number,
 	name: string,
@@ -16,6 +17,23 @@ export interface Properties {
 		propertyName: string,
 		propertyValueId: number | string,
 		propertyValueName: string
+}
+
+
+
+export interface PatchProduct {
+	Id: number,
+	name: string,
+	description: string,
+	image: string,
+	price: number,
+	deletedAt?: null | Date
+	properties: [
+		{
+			propertyId: number
+			propertyValueId: number
+		}
+	]
 }
 
 const currentTimestamp: Date = new Date();
@@ -88,17 +106,13 @@ export async function insertProductProperties(productId: number, properties: any
 	return await conn.execute(sql, values);
 }
 export async function updateExistingProduct (queryData: PostProduct, id: number ) {
-	const { properties } = queryData
-	 delete queryData.properties;
-
 	const [updatedProduct] = await conn.query(`
 	UPDATE Product
 	   SET ?,
 		   updatedAt = ?
 	   WHERE Id = ?
 		 AND deletedAt IS NULL`, [queryData, currentTimestamp, id]);
-		console.log(updatedProduct, 'here')
-	return {updatedProduct, properties}
+	return updatedProduct
 }
 
 export async function recreateProduct (id: number) {
@@ -113,13 +127,13 @@ export async function recreateProduct (id: number) {
 export async function updateProductProperties (productId: number, properties: Properties[]) {
 	return properties.map(async item => {
 		const sql = `
-                UPDATE Product_Property_Value
-                SET ProductValueId = ?
-                WHERE ProductId = ?
-                  AND PropertyId = ?;
-			`;
-		const values = [item.propertyValueId, productId, item.propertyId]
-		console.log(sql, values, 'hereee')
-		await conn.execute(sql, values);
+            UPDATE Product_Property_Value
+            SET ProductValueId = ?
+            WHERE ProductId = ?
+              AND PropertyId = ?;
+        `;
+		const values = [item.propertyValueId, productId, item.propertyId];
+
+		return await conn.execute(sql, values);
 	})
 }
