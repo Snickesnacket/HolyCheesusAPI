@@ -1,6 +1,7 @@
 import express from "express"
 import loginRouter  from './login'
 import productRouter from './products'
+import imageRouter from './images'
 const router = express.Router()
 
 router.use('/login', function(req, res, next){
@@ -8,5 +9,7 @@ router.use('/login', function(req, res, next){
 	next(); }, /*validate, controller*/ loginRouter )
 
 router.use('/products', /*validate, controller*/ productRouter)
+
+router.use('/images', /*validate, controller*/ imageRouter)
 
 export default router

@@ -44,7 +44,6 @@ export async function getProduct(queryId: number) {
 }
 
 export async function createProduct(queryData: PostProduct) {
-	console.log(queryData)
 	const [rows] = await conn.query<ResultSetHeader>(
 		`INSERT INTO Product SET ?`,
 		{
@@ -69,8 +68,8 @@ export async function deleteProduct( queryId: number ) {
 export async function insertProductProperties(productId: number, properties: any[]) {
 	const values = properties.flatMap(item => [productId, item.propertyId, item.propertyValueId]);
 	const placeholders = properties.map(() => '(?, ?, ?)').join(', ');
-	const sql = `UPDATE Product_Property_Value SET (ProductId, PropertyId, ProductValueId) WHERE ProductId = ? ${placeholders}, ,[PId]`;
-	return await conn.execute(sql, values);
+	const sql = `INSERT INTO Product_Property_Value (ProductId, PropertyId, ProductValueId) VALUES ${placeholders}`;
+	return  await conn.execute(sql, values);
 }
 export async function updateExistingProduct (queryData: PostProduct, id: number ) {
 	const [updatedProduct] = await conn.query(`
@@ -83,7 +82,6 @@ export async function updateExistingProduct (queryData: PostProduct, id: number 
 }
 
 export async function recreateProduct (id: number) {
-	console.log(id)
 	const [recreation] = await conn.execute(
 		'UPDATE Product SET deletedAt = NULL, updatedAt = ? WHERE Id = ? AND deletedAt IS NOT NULL',
 		[currentTimestamp, id]

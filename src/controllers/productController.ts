@@ -96,12 +96,10 @@ export const store = async (req: Request, res: Response) => {
 		let transactionAcitve = false;
 	try {
 
-		console.log(req.body)
 		await startTransaction();
 		transactionAcitve = true;
 
 		const productResponse = await createProduct(req.body);
-		console.log(productResponse, 'ny product')
 
 		if (!productResponse) {
 			return res.status(404).send({ status: "error", message: "Product already exists" });
@@ -244,7 +242,6 @@ export const destroy = async (req: Request, res: Response ) => {
 		})
 
 	} catch (err: any) {
-		console.log(err)
 		if(err.code === 1216) {
 			return res.status(400).send({ status: "error", message: "This property dose not exist" });
 		}

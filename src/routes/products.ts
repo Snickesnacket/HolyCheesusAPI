@@ -8,6 +8,7 @@ import {
 	reCreateProductSchema
 } from "../json-schemas/productValidation.schema";
 
+
 const router = express.Router()
 
 router.get('/', index)
