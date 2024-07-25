@@ -1,40 +1,7 @@
 import {conn} from "../db";
 import {QueryResult, ResultSetHeader, RowDataPacket} from "mysql2/promise";
-import {commitTransaction, rollbackTransaction, startTransaction} from "./helper_service";
-export interface  PostProduct {
-	Id: number,
-	name: string,
-	description: string,
-	image: string,
-	price: number,
-	createdAt: Date,
-	updatedAt: Date,
-	deletedAt?: null | Date
-	properties?: Properties[]
-}
-export interface Properties {
-		propertyId: number,
-		propertyName: string,
-		propertyValueId: number | string,
-		propertyValueName: string
-}
+import {PostProduct, Properties} from "../types/product";
 
-
-
-export interface PatchProduct {
-	Id: number,
-	name: string,
-	description: string,
-	image: string,
-	price: number,
-	deletedAt?: null | Date
-	properties: [
-		{
-			propertyId: number
-			propertyValueId: number
-		}
-	]
-}
 
 const currentTimestamp: Date = new Date();
 export async function getProducts() {

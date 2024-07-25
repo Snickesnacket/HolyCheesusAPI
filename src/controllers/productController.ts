@@ -6,6 +6,8 @@ import {
 	getProducts,
 	insertProductProperties, recreateProduct, updateExistingProduct, updateProductProperties,
 } from "../servcies/product_service";
+
+
 import {instanceOfNodeError} from "../errorTypeguard";
 import {conn} from "../db";
 import {commitTransaction, rollbackTransaction, startTransaction} from "../servcies/helper_service";
