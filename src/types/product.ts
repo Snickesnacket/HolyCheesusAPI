@@ -4,7 +4,6 @@ export interface  PostProduct {
 	Id: number,
 	name: string,
 	description: string,
-	image: string,
 	price: number,
 	createdAt: Date,
 	updatedAt: Date,
@@ -24,7 +23,6 @@ export interface PatchProduct {
 	Id: number,
 	name: string,
 	description: string,
-	image: string,
 	price: number,
 	deletedAt?: null | Date
 	properties: [

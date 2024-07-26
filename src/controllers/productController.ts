@@ -146,7 +146,6 @@ export const store = async (req: Request, res: Response) => {
 export const update = async (req: Request, res: Response ) => {
 	const productId = Number(req.params.id);
 	let transactionAcitve = false;
-
 	try{
 		await startTransaction();
 		transactionAcitve = true;
@@ -157,9 +156,7 @@ export const update = async (req: Request, res: Response ) => {
 			transactionAcitve = false;
 			return res.status(404).send({ status: "error", message: "Product not found" });
 		}
-
-		if (getProductResponse.at(0)?.data.deletedAt === null) {
-
+		if (getProductResponse.at(0)?.deletedAt === null) {
 			const { properties } = req.body
 			delete req.body.properties;
 

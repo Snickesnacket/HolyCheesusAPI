@@ -37,7 +37,7 @@ export async function getProduct(queryId: number) {
                      JOIN Property pr ON ppv.PropertyId = pr.Id
                      JOIN Property_Value pv ON ppv.ProductValueId = pv.Id
              WHERE p.DeletedAt IS NULL AND p.Id = ?
-             GROUP BY p.Id, p.Name, p.Description, p.Image, p.Price, p.CreatedAt, p.UpdatedAt, p.DeletedAt;`,
+             GROUP BY p.Id, p.Name, p.Description, p.Price, p.CreatedAt, p.UpdatedAt, p.DeletedAt;`,
 			[queryId]
 		);
 		return propertyRows
@@ -49,7 +49,6 @@ export async function createProduct(queryData: PostProduct) {
 		{
 			Name: queryData.name,
 			Description: queryData.description,
-			Image: queryData.image,
 			price: queryData.price
 		}
 	);
@@ -101,4 +100,14 @@ export async function updateProductProperties (productId: number, properties: Pr
 
 		return await conn.execute(sql, values);
 	})
+}
+
+export async function addImageToProduct () {
+	const rows = conn.execute(`
+	SELECT GROUP_CONCAT(Image.FileName SEPARATOR ',') 
+	FROM Product
+		LEFT JOIN ProductImage ON Product.id = ProductImage.id
+		LEFT JOIN Images ON ProductImage.ImageId = Image.id
+	GROUP BY Product.id`)
+
 }

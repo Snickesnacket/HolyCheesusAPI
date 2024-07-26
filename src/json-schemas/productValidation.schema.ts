@@ -3,7 +3,7 @@ import { List, ValidateFunction } from 'express-json-validator-middleware';
 export const postProductSchema: List<ValidateFunction>  = {
 	body: {
 		type:"object",
-		required: ['name', 'description', 'image', 'price', 'properties'],
+		required: ['name', 'description', 'price', 'properties'],
 		properties: {
 			name: {
 				type: 'string',
@@ -15,12 +15,6 @@ export const postProductSchema: List<ValidateFunction>  = {
 				type: 'string',
 				nullable: false,
 				minLength: 4,
-				maxLength: 255,
-			},
-			image: {
-				type: 'string',
-				nullable: false,
-				minLength: 10,
 				maxLength: 255,
 			},
 			price: {
@@ -63,7 +57,7 @@ export const patchProductSchema: List<ValidateFunction> = {
 		},
 	},
 	body: {
-		required: ['name', 'description', 'image','price', 'properties'],
+		required: ['name', 'description', 'price', 'properties'],
 		type: 'object',
 		properties: {
 			name: {
@@ -74,11 +68,6 @@ export const patchProductSchema: List<ValidateFunction> = {
 			description: {
 				type: 'string',
 				minLength: 4,
-				maxLength: 255,
-			},
-			image: {
-				type: 'string',
-				minLength: 10,
 				maxLength: 255,
 			},
 			price: {
