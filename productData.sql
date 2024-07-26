@@ -409,8 +409,13 @@ ALTER TABLE Product
     ADD UNIQUE (Name);
 
 
-ALTER TABLE Image
-    ADD COLUMN deletedAt TIMESTAMP NULL DEFAULT NULL;
+INSERT INTO Image (file) VALUES ("857918b4-1fc6-4a8a-9d80-5c5a0e2682b.jpg" );
+INSERT INTO Product_Image (ProductId, ImageId) VALUES (1,3);
 
-
+SELECT Product.*, GROUP_CONCAT(Image.file SEPARATOR ',') AS images
+FROM Product
+         LEFT JOIN Product_Image ON Product.Id = Product_Image.ProductId
+         LEFT JOIN Image ON Product_Image.ImageId = Image.Id
+WHERE Product.Id = 1
+GROUP BY Product.Id
 

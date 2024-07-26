@@ -3,8 +3,6 @@ import path from 'path';
 import e, { Request } from 'express';
 
 const fileFilterConfig = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-    console.log(file.mimetype)
-
     if (file.mimetype === "image/jpeg" || file.mimetype === "image/png" || file.mimetype === "audio/mpeg") {
         cb(null, true);
     } else {

@@ -1,5 +1,5 @@
 import {conn} from "../db";
-import {QueryResult, ResultSetHeader, RowDataPacket} from "mysql2/promise";
+import { ResultSetHeader, RowDataPacket} from "mysql2/promise";
 import {PostProduct, Properties} from "../types/product";
 
 
@@ -102,12 +102,3 @@ export async function updateProductProperties (productId: number, properties: Pr
 	})
 }
 
-export async function addImageToProduct () {
-	const rows = conn.execute(`
-	SELECT GROUP_CONCAT(Image.FileName SEPARATOR ',') 
-	FROM Product
-		LEFT JOIN ProductImage ON Product.id = ProductImage.id
-		LEFT JOIN Images ON ProductImage.ImageId = Image.id
-	GROUP BY Product.id`)
-
-}
