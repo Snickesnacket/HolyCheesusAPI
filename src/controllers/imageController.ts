@@ -1,6 +1,8 @@
 import {Request, Response} from "express";
 import {commitTransaction, rollbackTransaction, startTransaction} from "../servcies/helper_service";
 import {addImage, addImageToJoin} from "../servcies/image_sevice";
+import * as fs from "fs";
+import path from "path";
 
 
 
@@ -14,52 +16,44 @@ export const show = async (req: Request, res: Response) => {
 
 // post
 export const store = async (req: Request, res: Response) => {
-	let transactionAcitve = false;
+	let transactionAcitve = true;
 	try {
 
 		await startTransaction();
-		const img = JSON.stringify(req.file?.filename)
+		const img = req.file?.filename ?? '';
 		const productId = Number(req.params.id);
 
 		const ImageResponse = await addImage(img);
-		const joinResponse = await addImageToJoin(img, productId)
-		console.log(ImageResponse, joinResponse)
 
 
 		if (!ImageResponse) {
 			return res.status(404).send({ status: "error", message: "Product already exists" });
 		}
 
-		/*const propertyResponse = await insertProductProperties(ImageResponse.insertId, req.body.properties);
+		const tmp = ImageResponse.insertId
 
-		if(!propertyResponse) {
-			throw new Error('Failed to set properties of the product');
+		const joinResponse = await addImageToJoin(tmp, productId)
+
+		if (!joinResponse) {
+			return res.status(404).send({ status: "error", message: "Could not add image" });
 		}
 
-		const product = await getProduct(ImageResponse.insertId);
+		await commitTransaction();
+		transactionAcitve = false
 
-		if (ImageResponse && propertyResponse && product ) {
-			await commitTransaction();
-			transactionAcitve = false;
-			res.status(201).send({
-				status: "success",
-				data: product,
-			});
-		} else {
-			await rollbackTransaction();
-			transactionAcitve = false;
-			return res.status(500).json({error: 'Failed to create product'})
-		}
-*/
+		return res.status(200).send({status: "success", message: "Created image"});
+
 	} catch (err) {
 		if (transactionAcitve) {
+			const uploadsPath = path.join(__dirname, '..', '..', 'uploads');
+			fs.unlinkSync(`${uploadsPath}/${req.file?.filename}` ?? '')
+			console.log(`/uploads/${req.file?.filename}` )
 			await rollbackTransaction();
 		}
-		console.error('Error creating product:', err);
+		console.error('Error creating image:', err);
 		if (err instanceof Error) {
 			return res.status(409).json({
 				status: "error",
-				message: "A product with this name already exists",
 				sqlMessage: err.message
 			});
 		}

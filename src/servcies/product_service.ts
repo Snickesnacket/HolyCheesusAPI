@@ -8,7 +8,7 @@ export async function getProducts() {
 	const [propertyRows] = await conn.execute<RowDataPacket[]>(
 		`SELECT
              p.*,
-             GROUP_CONCAT(CONCAT(pr.Id, ':', pr.Name, ':', pv.Id, ':', pv.Name) SEPARATOR ',') AS Properties_Values
+             GROUP_CONCAT(CONCAT(pr.Id, ':', pr.Name, ':', pv.Id, ':', pv.Name) SEPARATOR ',') AS Properties_Values, GROUP_CONCAT(Image.file SEPARATOR ',') AS images
          FROM
              Product p
                  JOIN
@@ -17,11 +17,13 @@ export async function getProducts() {
              Property pr ON ppv.PropertyId = pr.Id
                  JOIN
              Property_Value pv ON ppv.ProductValueId = pv.Id
+                 LEFT JOIN Product_Image ON p.Id = Product_Image.ProductId
+                 LEFT JOIN Image ON Product_Image.ImageId = Image.Id
          WHERE p.DeletedAt IS NULL
          GROUP BY
              p.Id
          ORDER BY
-             p.Id DESC
+             p.Id ASC
              LIMIT 10;`,
 	);
 	return propertyRows
@@ -30,12 +32,14 @@ export async function getProduct(queryId: number) {
 		const [propertyRows] = await conn.execute<RowDataPacket[]>(
 			`SELECT
                  p.*,
-                 GROUP_CONCAT(CONCAT(pr.Id, ':', pr.Name, ':', pv.Id, ':', pv.Name) SEPARATOR ',') AS Properties_Values
+                 GROUP_CONCAT(CONCAT(pr.Id, ':', pr.Name, ':', pv.Id, ':', pv.Name) SEPARATOR ',') AS Properties_Values, GROUP_CONCAT(Image.file SEPARATOR ',') AS images
              FROM
                  Product p
                      JOIN Product_Property_Value ppv ON p.Id = ppv.ProductId
                      JOIN Property pr ON ppv.PropertyId = pr.Id
                      JOIN Property_Value pv ON ppv.ProductValueId = pv.Id
+                     LEFT JOIN Product_Image ON p.Id = Product_Image.ProductId
+                     LEFT JOIN Image ON Product_Image.ImageId = Image.Id
              WHERE p.DeletedAt IS NULL AND p.Id = ?
              GROUP BY p.Id, p.Name, p.Description, p.Price, p.CreatedAt, p.UpdatedAt, p.DeletedAt;`,
 			[queryId]
