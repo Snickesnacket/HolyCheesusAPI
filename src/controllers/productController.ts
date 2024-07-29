@@ -17,7 +17,7 @@ export const index = async (req: Request, res: Response) => {
 		const reponse =  await getProducts()
 
 		if (!reponse) {
-			return res.status(404).send({ status: "error", message: "Products not found" });
+			return res.status(404).json({ status: "error", message: "Products not found" });
 		}
 
 		const products = reponse.map(item => {
@@ -36,14 +36,14 @@ export const index = async (req: Request, res: Response) => {
 			return item;
 		})
 
-		res.send({
+		return res.json({
 			status: "success",
 			data: products,
 		})
 
 	} catch (err) {
 		console.error('Error fetching product:', err);
-		res.status(500).send({ status: "error", message: "Something went wrong" })
+		return res.status(500).json({ status: "error", message: "Something went wrong" })
 	}
 }
 
@@ -79,14 +79,14 @@ export const show = async (req: Request, res: Response) => {
 			throw new Error( "Failed to fetch product")
 		}
 
-		res.send({
+		return res.json({
 			status: "success",
 			data: product,
 		});
 
 	} catch (err) {
 		console.error('Error fetching product:', err);
-		res.status(500).send({ status: "error", message: "Something went wrong" });
+		return res.status(500).json({ status: "error", message: "Something went wrong" });
 	}
 };
 
@@ -102,7 +102,7 @@ export const store = async (req: Request, res: Response) => {
 		const productResponse = await createProduct(req.body);
 
 		if (!productResponse) {
-			return res.status(404).send({ status: "error", message: "Product already exists" });
+			return res.status(404).json({ status: "error", message: "Product already exists" });
 		}
 
 		const propertyResponse = await insertProductProperties(productResponse.insertId, req.body.properties);
@@ -116,7 +116,7 @@ export const store = async (req: Request, res: Response) => {
 		if (productResponse && propertyResponse && product ) {
 			await commitTransaction();
 			transactionAcitve = false;
-			res.status(201).send({
+			return res.status(201).json({
 				status: "success",
 				data: product,
 			});
@@ -154,7 +154,7 @@ export const update = async (req: Request, res: Response ) => {
 		if(!getProductResponse) {
 			await rollbackTransaction();
 			transactionAcitve = false;
-			return res.status(404).send({ status: "error", message: "Product not found" });
+			return res.status(404).json({ status: "error", message: "Product not found" });
 		}
 		if (getProductResponse.at(0)?.deletedAt === null) {
 			const { properties } = req.body
@@ -165,7 +165,7 @@ export const update = async (req: Request, res: Response ) => {
 			if(!updatedProduct || !Array.isArray(updatedProduct) && updatedProduct.affectedRows === 0) {
 				await rollbackTransaction();
 				transactionAcitve = false;
-				return res.status(404).send({ status: "error", message: "Product not found" });
+				return res.status(404).json({ status: "error", message: "Product not found" });
 			}
 
 			const propertyResponse = await updateProductProperties(productId, properties)
@@ -176,7 +176,7 @@ export const update = async (req: Request, res: Response ) => {
 				if(product) {
 					await commitTransaction();
 					transactionAcitve = false;
-					res.send({
+					return res.json({
 						status: "success",
 						data: product,
 					})
@@ -223,7 +223,7 @@ export const destroy = async (req: Request, res: Response ) => {
 	const productId = Number(req.params.id);
 
 	if (isNaN(productId) || productId <= 0) {
-		return res.status(400).send({ status: "error", message: "Invalid product ID" });
+		return res.status(400).json({ status: "error", message: "Invalid product ID" });
 	}
 
 	try{
@@ -233,14 +233,14 @@ export const destroy = async (req: Request, res: Response ) => {
 			throw new Error(`Product dosen't exist`)
 		}
 
-		res.send({
+		return res.json({
 			status: "success",
 			data: product,
 		})
 
 	} catch (err: any) {
 		if(err.code === 1216) {
-			return res.status(400).send({ status: "error", message: "This property dose not exist" });
+			return res.status(400).json({ status: "error", message: "This property dose not exist" });
 		}
 		if (instanceOfNodeError(err, Error)) {
 			switch (err.code) {
@@ -269,25 +269,24 @@ export const reCreate = async (req: Request, res: Response ) => {
 		await startTransaction();
 		transactionAcitve = true;
 
-		const product  = await recreateProduct(productId)
+		const reCreateproduct  = await recreateProduct(productId)
 
-		if (!Array.isArray(product) && product.affectedRows === 0 || !product) {
+		if (!Array.isArray(reCreateproduct) && reCreateproduct.affectedRows === 0 || !reCreateproduct) {
 			throw new Error('Product not found or already active');
 
 		}
-		const p = await getProduct(productId)
+		const product = await getProduct(productId)
 
-		if(p){
+		if(product){
 			await commitTransaction();
 			transactionAcitve = false;
-			res.send({
+			return res.json({
 				status: "success",
-				data: p,
 			})
 		}else {
 			await rollbackTransaction();
 			transactionAcitve = false;
-			return res.status(500).json({error: 'Failed to create product'})
+			return res.status(500).json({error: 'Failed to create reCreateproduct'})
 		}
 
 	} catch (err: any) {

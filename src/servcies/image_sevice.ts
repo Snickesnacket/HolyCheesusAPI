@@ -8,9 +8,9 @@ export async function addImage (img: string) {
 }
 
 //SELECT THE NEWLY CREATED IMG ID TO USE BELOW!!!
-export async function addImageToJoin (tmp: number, id: number) {
+export async function addImageToJoin (idImage: number, id: number) {
 	const [rows] = await conn.query<ResultSetHeader>(`
-        INSERT INTO Product_Image (ProductId, ImageId) VALUES (?,?);`, [id, tmp])
+        INSERT INTO Product_Image (ProductId, ImageId) VALUES (?,?);`, [id, idImage])
 	console.log(rows)
 	return rows
 }

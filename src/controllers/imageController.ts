@@ -27,21 +27,21 @@ export const store = async (req: Request, res: Response) => {
 
 
 		if (!ImageResponse) {
-			return res.status(404).send({ status: "error", message: "Product already exists" });
+			return res.status(404).json({ status: "error", message: "Product already exists" });
 		}
 
-		const tmp = ImageResponse.insertId
+		const imageId = ImageResponse.insertId
 
-		const joinResponse = await addImageToJoin(tmp, productId)
+		const joinResponse = await addImageToJoin(imageId, productId)
 
 		if (!joinResponse) {
-			return res.status(404).send({ status: "error", message: "Could not add image" });
+			return res.status(404).json({ status: "error", message: "Could not add image" });
 		}
 
 		await commitTransaction();
 		transactionAcitve = false
 
-		return res.status(200).send({status: "success", message: "Created image"});
+		return res.status(200).json({status: "success", message: "Created image"});
 
 	} catch (err) {
 		if (transactionAcitve) {
