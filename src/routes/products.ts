@@ -15,7 +15,7 @@ router.get('/', index)
 
 router.get( '/:id', validate(getProductSchema), show )
 
-router.post('/', store)
+router.post('/', validate(postProductSchema), store)
 
 router.patch('/:id', validate(patchProductSchema), update)
 

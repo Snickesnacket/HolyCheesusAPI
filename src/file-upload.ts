@@ -2,12 +2,15 @@ import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import e, { Request } from 'express';
 
-const fileFilterConfig = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-    if (file.mimetype === "image/jpeg" || file.mimetype === "image/png" || file.mimetype === "audio/mpeg") {
-        cb(null, true);
-    } else {
-        cb(null, false);
+const fileFilter = (
+    _req: Request,
+    file: Express.Multer.File,
+    callback: FileFilterCallback
+) => {
+    if (!file || file.mimetype.split('/')[0] != 'image') {
+        return callback(new Error('Only images allowed'));
     }
+    callback(null, true);
 };
 
 import {randomUUID} from "node:crypto";
@@ -21,8 +24,9 @@ const storage = multer.diskStorage({
 })
 
 const upload = multer({ storage: storage, limits: {
-        fileSize: 1024 * 1024 * 10
+        fileSize: 1024 * 1024 * 1000
     },
-    fileFilter: fileFilterConfig,})
+    fileFilter: fileFilter,})
+
 
 export default upload
