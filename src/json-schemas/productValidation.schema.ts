@@ -1,5 +1,30 @@
 import { List, ValidateFunction } from 'express-json-validator-middleware';
 
+export const getProductsSchema: List<ValidateFunction> = {
+	params: {
+		type: 'object',
+		required: ['limit'],
+		properties: {
+			limit: {
+				type: 'number',
+				enum: [10, 15, 20],
+			},
+		},
+	},
+};
+export const getProductSchema: List<ValidateFunction> = {
+	params: {
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: {
+				type: 'string',
+				minLength: 1,
+				maxLength: 10,
+			},
+		},
+	},
+};
 export const postProductSchema: List<ValidateFunction>  = {
 	body: {
 		type:"object",
@@ -30,19 +55,7 @@ export const postProductSchema: List<ValidateFunction>  = {
 	}
 };
 
-export const getProductSchema: List<ValidateFunction> = {
-	params: {
-		type: 'object',
-		required: ['id'],
-		properties: {
-			id: {
-				type: 'string',
-				minLength: 1,
-				maxLength: 10,
-			},
-		},
-	},
-};
+
 
 export const patchProductSchema: List<ValidateFunction> = {
 	params: {

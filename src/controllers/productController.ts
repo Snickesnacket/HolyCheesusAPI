@@ -13,8 +13,10 @@ import {conn} from "../db";
 import {commitTransaction, rollbackTransaction, startTransaction} from "../servcies/helper_service";
 
 export const index = async (req: Request, res: Response) => {
+	const limit  = Number(req.params.limit);
+
 	try{
-		const reponse =  await getProducts()
+		const reponse =  await getProducts(limit)
 
 		if (!reponse) {
 			return res.status(404).json({ status: "error", message: "Products not found" });

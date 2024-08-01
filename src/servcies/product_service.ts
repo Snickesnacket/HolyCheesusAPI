@@ -1,10 +1,9 @@
 import {conn} from "../db";
 import { ResultSetHeader, RowDataPacket} from "mysql2/promise";
 import {PostProduct, Properties} from "../types/product";
-
-
 const currentTimestamp: Date = new Date();
-export async function getProducts() {
+export async function getProducts(limit: number) {
+	console.log(limit)
 	const [propertyRows] = await conn.execute<RowDataPacket[]>(
 		`SELECT
              p.*,
@@ -24,7 +23,7 @@ export async function getProducts() {
              p.Id
          ORDER BY
              p.Id ASC
-             LIMIT 10;`,
+             LIMIT ${limit};`
 	);
 	return propertyRows
 }

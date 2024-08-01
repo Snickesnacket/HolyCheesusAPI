@@ -3,6 +3,7 @@ import {destroy, index, update, store, show, reCreate} from '../controllers/prod
 import validate from '../middleware/json-validator';
 import {
 	getProductSchema,
+	getProductsSchema,
 	patchProductSchema,
 	postProductSchema,
 	reCreateProductSchema
@@ -11,7 +12,7 @@ import {
 
 const router = express.Router()
 
-router.get('/', index)
+router.get('/:limit',  validate(getProductsSchema), index)
 
 router.get( '/:id', validate(getProductSchema), show )
 
