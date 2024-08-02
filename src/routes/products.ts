@@ -1,4 +1,4 @@
-import express from 'express'
+import express, {request, response} from 'express'
 import {destroy, index, update, store, show, reCreate} from '../controllers/productController'
 import validate from '../middleware/json-validator';
 import {
@@ -12,7 +12,7 @@ import {
 
 const router = express.Router()
 
-router.get('/:limit',  validate(getProductsSchema), index)
+router.get('/', validate(getProductsSchema), index)
 
 router.get( '/:id', validate(getProductSchema), show )
 

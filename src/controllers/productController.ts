@@ -13,10 +13,14 @@ import {conn} from "../db";
 import {commitTransaction, rollbackTransaction, startTransaction} from "../servcies/helper_service";
 
 export const index = async (req: Request, res: Response) => {
-	const limit  = Number(req.params.limit);
+	let limit  = Number(req.query.limit || 0)
+	const page = Number(req.query.page || 1)
+
+	if (limit > 100) limit = 100;
+	const skipAmount = (page - 1) * limit;
 
 	try{
-		const reponse =  await getProducts(limit)
+		const reponse =  await getProducts(limit, skipAmount)
 
 		if (!reponse) {
 			return res.status(404).json({ status: "error", message: "Products not found" });

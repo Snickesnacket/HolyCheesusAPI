@@ -1,13 +1,14 @@
 import { List, ValidateFunction } from 'express-json-validator-middleware';
 
 export const getProductsSchema: List<ValidateFunction> = {
-	params: {
+	query: {
 		type: 'object',
-		required: ['limit'],
 		properties: {
+			page: {
+				type: 'string',
+			},
 			limit: {
-				type: 'number',
-				enum: [10, 15, 20],
+				type: 'string',
 			},
 		},
 	},
