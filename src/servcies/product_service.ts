@@ -26,6 +26,11 @@ export async function getProducts(limit: number, skip: number) {
 	);
 	return propertyRows
 }
+
+export async function getCount() {
+	const [count] = await conn.execute<RowDataPacket[]>(`SELECT COUNT(Product.Id) AS NumberOfProducts FROM Product WHERE deletedAt IS NULL;`)
+	return count
+}
 export async function getProduct(queryId: number) {
 		const [propertyRows] = await conn.execute<RowDataPacket[]>(
 			`SELECT

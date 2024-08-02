@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import {
 	createProduct,
-	deleteProduct,
+	deleteProduct, getCount,
 	getProduct,
 	getProducts,
 	insertProductProperties, recreateProduct, updateExistingProduct, updateProductProperties,
@@ -16,13 +16,21 @@ export const index = async (req: Request, res: Response) => {
 	let limit  = Number(req.query.limit || 0)
 	const page = Number(req.query.page || 1)
 
-	if (limit > 100) limit = 100;
-	const skipAmount = (page - 1) * limit;
 
-	try{
+	let transactionAcitve = false;
+
+	try {
+
+		await startTransaction();
+
+		transactionAcitve = true;
+
+		if (limit > 100) limit = 100;
+		const skipAmount = (page - 1) * limit;
 		const reponse =  await getProducts(limit, skipAmount)
+		const count = await getCount()
 
-		if (!reponse) {
+		if (!reponse && !count ) {
 			return res.status(404).json({ status: "error", message: "Products not found" });
 		}
 
@@ -41,13 +49,19 @@ export const index = async (req: Request, res: Response) => {
 
 			return item;
 		})
+		const totalCount = count.at(0)?.NumberOfProducts
 
+		await commitTransaction()
 		return res.json({
 			status: "success",
 			data: products,
+			page: page,
+			last_page: Math.ceil(totalCount / limit),
 		})
 
 	} catch (err) {
+		await rollbackTransaction();
+		transactionAcitve = false;
 		console.error('Error fetching product:', err);
 		return res.status(500).json({ status: "error", message: "Something went wrong" })
 	}
