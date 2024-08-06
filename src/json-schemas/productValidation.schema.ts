@@ -1,5 +1,39 @@
 import { List, ValidateFunction } from 'express-json-validator-middleware';
 
+export const getProductsSchema: List<ValidateFunction> = {
+	query: {
+		type: 'object',
+		properties: {
+			page: {
+				type: 'string',
+			},
+			limit: {
+				type: 'string',
+			},
+			filter: {
+				type: "object",
+				properties: {
+					price: {
+						type: "string",
+					},
+					country: {
+						type: "string",
+					},
+					flavor: {
+						type: "string"
+					},
+					consistency: {
+						type: "string"
+					},
+					popularity: {
+						type: "string"
+					}
+				}
+			}
+		},
+	},
+};
+
 export const postProductSchema: List<ValidateFunction>  = {
 	body: {
 		type:"object",
